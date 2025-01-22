@@ -53,7 +53,7 @@ def add_symbol(symbol: str = Form(...), industry: str = Form(...)):
     # Validate inputs
     if not symbol.isupper() or not industry.isalpha():
         return {"error": "Invalid input"}
-    if any(s["symbol"] == symbol for s in symbols):
+    if any(s.symbol == symbol for s in symbols):
         return {"error": f"Symbol {symbol} is already subscribed."}
 
     # Generate random data
