@@ -1,0 +1,114 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Dashboard</h1>
+        <div class="top-section">
+            <div class="card">Card TL</div>
+            <div class="main">
+                <form id="symbol-form">
+                    <input type="text" id="symbol" placeholder="Symbol" required />
+                    <input type="text" id="industry" placeholder="Industry" required />
+                    <button type="submit">Add</button>
+                </form>
+                <p id="subscribed-symbols">Subscribed Symbols: None</p>
+                <table id="symbol-table">
+                    <thead>
+                        <tr>
+                            <th>Symbol</th>
+                            <th>Industry</th>
+                            <th>Open Price</th>
+                            <th>High Price</th>
+                            <th>Low Price</th>
+                            <th>Close Price</th>
+                            <th>Volume</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+            <div class="card">Card TR</div>
+        </div>
+        <div class="bottom-section">
+            <div class="card">Card BL</div>
+            <div class="card">Card MR</div>
+            <div class="card">Card BR</div>
+        </div>
+    </div>
+    <script>
+        const form = document.getElementById('symbol-form');
+        const tableBody = document.getElementById('symbol-table').querySelector('tbody');
+        const subscribedSymbols = document.getElementById('subscribed-symbols');
+
+        // Fetch symbols from server
+        async function fetchSymbols() {
+            const res = await fetch('http://127.0.0.1:8000/symbols/');
+            const symbols = await res.json();
+            updateTable(symbols);
+        }
+
+        // Add symbol
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const symbol = document.getElementById('symbol').value.toUpperCase();
+            const industry = document.getElementById('industry').value;
+
+            const formData = new FormData();
+            formData.append('symbol', symbol);
+            formData.append('industry', industry);
+
+            const res = await fetch('http://127.0.0.1:8000/add-symbol/', {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await res.json();
+            if (data.error) {
+                alert(data.error);
+            } else {
+                updateTable(data.symbols);
+            }
+            form.reset();
+        });
+
+        // Update table
+        function updateTable(symbols) {
+            tableBody.innerHTML = '';
+            subscribedSymbols.textContent =
+                'Subscribed Symbols: ' +
+                symbols.map((s) => s.symbol).join(', ');
+            symbols.forEach((s) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+          <td>${s.symbol}</td>
+          <td>${s.industry}</td>
+          <td>${s.open_price.toFixed(2)}</td>
+          <td>${s.high_price.toFixed(2)}</td>
+          <td>${s.low_price.toFixed(2)}</td>
+          <td>${s.close_price.toFixed(2)}</td>
+          <td>${s.volume}</td>
+        `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Update symbols every second
+        setInterval(async () => {
+            await fetch('http://127.0.0.1:8000/update-symbols/', { method: 'POST' });
+            fetchSymbols();
+        }, 1000);
+
+        fetchSymbols();
+    </script>
+</body>
+
+</html>
